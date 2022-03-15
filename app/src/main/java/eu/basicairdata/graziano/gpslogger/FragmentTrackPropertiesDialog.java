@@ -45,6 +45,8 @@ import org.greenrobot.eventbus.EventBus;
 import static eu.basicairdata.graziano.gpslogger.GPSApplication.NOT_AVAILABLE;
 import static eu.basicairdata.graziano.gpslogger.GPSApplication.TOAST_VERTICAL_OFFSET;
 
+import java.time.LocalDateTime;
+
 /**
  * The Dialog that shows the properties of a Track.
  * The user can use it to edit the description and the activity type.
@@ -101,6 +103,7 @@ public class FragmentTrackPropertiesDialog extends DialogFragment {
             if (!trackToEdit.getDescription().isEmpty()) {
                 etDescription.setText(trackToEdit.getDescription());
             }
+            etDescription.setText(GPSApplication.getInstance().getString(R.string.track_id) + " " + trackToEdit.getId());
             etDescription.setHint(GPSApplication.getInstance().getString(R.string.track_id) + " " + trackToEdit.getId());
         }
 

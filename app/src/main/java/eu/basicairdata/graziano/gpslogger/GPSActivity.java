@@ -63,6 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static eu.basicairdata.graziano.gpslogger.GPSApplication.NOT_AVAILABLE;
 import static eu.basicairdata.graziano.gpslogger.GPSApplication.TOAST_VERTICAL_OFFSET;
 
 /**
@@ -102,26 +103,26 @@ public class GPSActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_gps);
-        toolbar = findViewById(R.id.id_toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        viewPager = findViewById(R.id.id_viewpager);
-        viewPager.setOffscreenPageLimit(3);
+                                toolbar = findViewById(R.id.id_toolbar);
+                        setSupportActionBar(toolbar);
+                        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                        viewPager = findViewById(R.id.id_viewpager);
+                        viewPager.setOffscreenPageLimit(3);
 
-        setupViewPager(viewPager);
+                        setupViewPager(viewPager);
 
-        tabLayout = findViewById(R.id.id_tablayout);
-        tabLayout.setTabMode(TabLayout.MODE_FIXED);
-        tabLayout.setupWithViewPager(viewPager);
+                        tabLayout = findViewById(R.id.id_tablayout);
+                        tabLayout.setTabMode(TabLayout.MODE_FIXED);
+                        tabLayout.setupWithViewPager(viewPager);
 
-        tabLayout.addOnTabSelectedListener(
-                new TabLayout.ViewPagerOnTabSelectedListener(viewPager) {
-                    @Override
-                    public void onTabSelected(TabLayout.Tab tab) {
-                        super.onTabSelected(tab);
-                        gpsApp.setGPSActivityActiveTab(tab.getPosition());
-                        updateBottomSheetPosition();
-                        activateActionModeIfNeeded();
+                        tabLayout.addOnTabSelectedListener(
+                                new TabLayout.ViewPagerOnTabSelectedListener(viewPager) {
+                                    @Override
+                                    public void onTabSelected(TabLayout.Tab tab) {
+                                        super.onTabSelected(tab);
+                                        gpsApp.setGPSActivityActiveTab(tab.getPosition());
+                                        updateBottomSheetPosition();
+                                        activateActionModeIfNeeded();
                     }
                 });
 
@@ -190,7 +191,10 @@ public class GPSActivity extends AppCompatActivity {
                     }
                 });
             }
-            else builder.setMessage(getResources().getString(R.string.dlg_app_killed));
+            else {
+                builder.setMessage(getResources().getString(R.string.dlg_app_killed)+"\n\n"+getResources().getString(R.string.auto_save));
+
+            }
             builder.setIcon(android.R.drawable.ic_menu_info_details);
             builder.setPositiveButton(R.string.about_ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
@@ -199,6 +203,8 @@ public class GPSActivity extends AppCompatActivity {
             });
             AlertDialog dialog = builder.create();
             dialog.show();
+            onRequestStop();
+
         }
         if (gpsApp.isJustStarted() && (gpsApp.getCurrentTrack().getNumberOfLocations() + gpsApp.getCurrentTrack().getNumberOfPlacemarks() > 0)) {
             Toast toast = Toast.makeText(gpsApp.getApplicationContext(), R.string.toast_active_track_not_empty, Toast.LENGTH_LONG);
@@ -213,7 +219,37 @@ public class GPSActivity extends AppCompatActivity {
             showToastGrantStoragePermission = false;
         }
     }
+    public void onRequestStop() {
+            if (!gpsApp.isBottomBarLocked()) {
+                Track trackToEdit = gpsApp.getCurrentTrack();
+                String trackDescription = GPSApplication.getInstance().getString(R.string.track_id) + " " + trackToEdit.getId();
+                trackToEdit.setDescription (trackDescription.trim());
+                trackToEdit.setType(Track.TRACK_TYPE_CAR);  // the user selected a track type!
+                GPSApplication.getInstance().gpsDataBase.updateTrack(trackToEdit);
+                // a request to finalize a track
+                EventBus.getDefault().post(EventBusMSG.NEW_TRACK);
+                Toast toast = Toast.makeText(GPSApplication.getInstance().getApplicationContext(), R.string.toast_track_saved_into_tracklist, Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.BOTTOM, 0, TOAST_VERTICAL_OFFSET);
+                toast.show();
+                if (!gpsApp.isStopButtonFlag()) {
+                    gpsApp.setRecording(!gpsApp.isRecording());
+                    if (!gpsApp.isFirstFixFound() && (gpsApp.isRecording())) {
+                        Toast toast3 = Toast.makeText(gpsApp.getApplicationContext(), R.string.toast_recording_when_gps_found, Toast.LENGTH_LONG);
+                        toast3.setGravity(Gravity.BOTTOM, 0, TOAST_VERTICAL_OFFSET);
+                        toast3.show();
+                    }
+//                    Update();
+                }
+//                        Toast toast2 = Toast.makeText(gpsApp.getApplicationContext(), R.string.toast_nothing_to_save, Toast.LENGTH_SHORT);
+//                        toast2.setGravity(Gravity.BOTTOM, 0, TOAST_VERTICAL_OFFSET);
+//                        toast2.show();
+            } else {
+                Toast toast = Toast.makeText(gpsApp.getApplicationContext(), R.string.toast_bottom_bar_locked, Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.BOTTOM, 0, TOAST_VERTICAL_OFFSET);
+                toast.show();
+            }
 
+    }
     @Override
     public void onPause() {
         Log.w("myApp", "[#] " + this + " - onPause()");

@@ -200,6 +200,7 @@ public class FragmentRecordingControls extends Fragment {
                     if (gpsApp.getCurrentTrack().getNumberOfLocations() + gpsApp.getCurrentTrack().getNumberOfPlacemarks() > 0) {
                         FragmentManager fm = getActivity().getSupportFragmentManager();
                         FragmentTrackPropertiesDialog tpDialog = new FragmentTrackPropertiesDialog();
+
                         gpsApp.setTrackToEdit(gpsApp.getCurrentTrack());
                         tpDialog.setTitleResource(R.string.finalize_track);
                         tpDialog.setFinalizeTrackWithOk(true);
